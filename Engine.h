@@ -34,10 +34,10 @@ public:
 
 public:
 
-  void construct(uint16_t width, uint16_t height, Logger* l, std::string);
+  void construct(uint16_t width, uint16_t height, std::string name, Logger* l);
   void start();
-  virtual void OnUserCreate(){};
-  virtual void OnUserUpdate(){};
+  virtual void userCreate(){};
+  virtual void userUpdate(){};
 
   void Draw(int x, int y, int col);
   void DrawLine(int x1, int y1, int x2, int y2, int col);
@@ -60,6 +60,7 @@ public:
 
 
 private:
+  void MainThread();
   void CoreUpdate();
   void EventHandler();
 
@@ -69,8 +70,9 @@ private:
   void ClearWindow();
 
   void CalcFrameTime();
+  void DisplayFPS();
 
-  Logger* Logs = nullptr;
+  Logger* Logs;
 
   std::string WindowName;
   int WindowWidth;
@@ -83,16 +85,21 @@ private:
     int XWindowNumber;
   #endif
 
-  int FPS;
-  std::chrono::duration<float> elapsedTime;
+
+  float FPSLimit = 0.01;
+  float timeCounter = 0;
+  float elapsedTime = 0;
   std::chrono::time_point<std::chrono::system_clock> TimePoint1, TimePoint2;
+
   int MousePos[2] = {0,0};
 
 };
 
 //---------------------------------------------------------//
 
-void Engine::construct(uint16_t width, uint16_t height, Logger* l, std::string name = "")
+
+
+void Engine::construct(uint16_t width, uint16_t height, std::string name = "", Logger* l = nullptr)
 {
   WindowWidth = width;
   WindowHeight = height;
@@ -104,7 +111,7 @@ void Engine::start()
   InitWindow(WindowWidth, WindowHeight);
   TimePoint1 = std::chrono::system_clock::now();
   TimePoint2 = std::chrono::system_clock::now();
-  std::thread t = std::thread(&Engine::CoreUpdate, this);
+  std::thread t = std::thread(&Engine::MainThread, this);
   t.join();
 }
 // Engine::Engine(uint16_t width, uint16_t height)
@@ -155,27 +162,48 @@ void Engine::CloseWindow()
 
 }
 
+void Engine::MainThread()
+{
+
+  while(true)
+  {
+    CalcFrameTime();
+
+    if (timeCounter >= FPSLimit)
+    {
+      CoreUpdate();
+      timeCounter = 0;
+    }
+    else
+      { timeCounter += elapsedTime; }
+
+  }
+
+}
+
 void Engine::CoreUpdate()
 {
-  while(true){
-    usleep(10000); //Avoid Crash for now
-    CalcFrameTime();
-    EventHandler();
-    OnUserUpdate();
-  }
+  DisplayFPS();
+  EventHandler();
+  userUpdate();
 }
 
 void Engine::CalcFrameTime()
 {
   TimePoint2 = std::chrono::system_clock::now();
-  elapsedTime = TimePoint2 - TimePoint1;
+  std::chrono::duration<float> a = TimePoint2 - TimePoint1;
+  elapsedTime = a.count();
   TimePoint1 = TimePoint2;
-  FPS = (1 / elapsedTime.count()) + 1;
-  //std::cout << "FPS: " << FPS << std::endl;
-  //srand(time(NULL));
-  //usleep(rand() % 1000000 + 1);
-  std::string fps = WindowName + " FPS: " + std::to_string(FPS);
-  XStoreName(XDisplay, XWindow, fps.c_str());
+}
+
+void Engine::DisplayFPS()
+{
+  int FPS = (1 / (elapsedTime + FPSLimit)) + 1;
+  if ( FPS < 100000 ) // Lmao
+  {
+    std::string title = WindowName + " | FPS: " + std::to_string(FPS);
+    XStoreName(XDisplay, XWindow, title.c_str());
+  }
 }
 
 void Engine::EventHandler()
@@ -207,8 +235,9 @@ int* Engine::getMousePos(XEvent* events)
 
   #if defined(DEBUG)
     using namespace std;
-    std::string value = "X: " + to_string(MousePos[0]) + " | " + "Y: " + to_string(MousePos[1]);
-    Logs->log(0, 1, &value);
+    std::string value = "X: " + to_string(MousePos[0]) + " | "
+                      + "Y: " + to_string(MousePos[1]);
+    Logs->log(3, &value);
   #endif
 
   return MousePos;

@@ -10,7 +10,7 @@ class Logger
 public:
   Logger(uint8_t level) { setVerbose(level); }
 
-  void log(uint8_t verbose, int timestamp, std::string* value);
+  void log(uint8_t verbose, std::string* value);
 
 private:
 
@@ -22,10 +22,10 @@ private:
 
 
 
-void Logger::log(uint8_t _verbose, int timestamp, std::string* value)
+void Logger::log(uint8_t _verbose, std::string* value)
 {
-  if(_verbose < verbose)
-    std::cout << "[" << timestamp << "] " << *value << std::endl;
+  if(_verbose <= verbose)
+    std::cout << *value << std::endl;
 }
 
 

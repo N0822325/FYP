@@ -1,10 +1,10 @@
-#define DEBUG
-
 #include <iostream>
-#include "Engine.h"
-#include "Logger.h"
 
-Logger logg(1);
+#include "Logger.h"
+#define DEBUG
+Logger logg(3);
+
+#include "Engine.h"
 
 
 class Poggus : public Engine
@@ -12,13 +12,13 @@ class Poggus : public Engine
 public:
   Poggus(int width, int height)
   {
-    construct(width, height, &logg, "Poggus");
+    construct(width, height, "Poggus", &logg);
     start();
   }
 
-  void OnUserUpdate() override
+  void userUpdate() override
   {
-    //getMousePos();
+
   }
 
 };
@@ -27,8 +27,6 @@ public:
 int main()
 {
   Poggus sadChamp(500,500);
-
-  int a; std::cin >> a;
 
   return 1;
 }
