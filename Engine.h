@@ -4,6 +4,7 @@
   #if defined(__linux__)
     #include <GL/gl.h>
     #include <GL/glx.h>
+    #include <GL/glu.h>
 
     #include <X11/X.h>
     #include <X11/Xlib.h>
@@ -15,10 +16,15 @@
   #endif
 
   #include "Logger.h"
+  #include <iostream>
   #include <string>
   #include <thread>
   #include <unistd.h>
   #include <time.h>
+
+  void DrawAQuad() {
+
+  }
 
 //---------------------------------------------------------//
 
@@ -27,47 +33,49 @@ class Engine
 
 public:
 
-  Engine(){};
+  //Engine(){};
   // Engine(uint16_t width, uint16_t height);
   // Engine(uint16_t width, uint16_t height, Logger* logs);
   // ~Engine();
 
 public:
 
-  void construct(uint16_t width, uint16_t height, std::string name, Logger* l);
+  void construct(uint16_t width, uint16_t height, std::string name, Logger* logs);
   void start();
   virtual void userCreate(){};
   virtual void userUpdate(){};
 
-  void Draw(int x, int y, int col);
-  void DrawLine(int x1, int y1, int x2, int y2, int col);
+  // void Draw(int x, int y, int col);
+  // void DrawLine(int x1, int y1, int x2, int y2, int col);
   void DrawRect(int x1, int y1, int x2, int y2, int col, bool full);
-  void DrawTri(int x, int y, int w, int h, int col, bool full);
-  void DrawCircle(int x, int y, int r, int col, bool full);
+  // void DrawTri(int x, int y, int w, int h, int col, bool full);
+  // void DrawCircle(int x, int y, int r, int col, bool full);
 
   //void DrawSprite(int x, int y, Sprite s, xScale xs, yScale ys);
   //void DrawString(int x, int y, std::string text, int col, xScale xs, yScale ys)
 
-  void DrawLine(int x1, int y1, int z1, int x2, int y2, int z2, int col);
-  void DrawCube(int x, int y, int w, int h, int d, int col, bool full);
-  void DrawPyramid(int x, int y, int w, int h, int col, bool full);
-  void DrawSphere(int x, int y, int r, int col);
+  // void DrawLine(int x1, int y1, int z1, int x2, int y2, int z2, int col);
+  // void DrawCube(int x, int y, int w, int h, int d, int col, bool full);
+  // void DrawPyramid(int x, int y, int w, int h, int col, bool full);
+  // void DrawSphere(int x, int y, int r, int col);
 
 
-  int getKeys();
+  // int getKeys();
   int* getMousePos(XEvent* events);
-  int getMouseState();
+  // int getMouseState();
 
 
 private:
+  void Initialse();
   void MainThread();
   void CoreUpdate();
   void EventHandler();
 
   void InitWindow(uint16_t width, uint16_t height);
   void CloseWindow();
-  void UpdateWindow();
-  void ClearWindow();
+  //void UpdateWindow(){};
+  //void ClearWindow(){};
+
 
   void CalcFrameTime();
   void DisplayFPS();
@@ -85,6 +93,15 @@ private:
     int XWindowNumber;
   #endif
 
+  //GL
+  Colormap cmap;
+  XVisualInfo *vi;
+  XWindowAttributes gwa;
+  XSetWindowAttributes swa;
+  GLXContext glContext;
+  GLint attributes[5] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
+  //
+
 
   float FPSLimit = 0.01;
   float timeCounter = 0;
@@ -99,28 +116,26 @@ private:
 
 
 
-void Engine::construct(uint16_t width, uint16_t height, std::string name = "", Logger* l = nullptr)
+void Engine::construct(uint16_t width, uint16_t height, std::string name = "", Logger* logs = nullptr)
 {
   WindowWidth = width;
   WindowHeight = height;
   WindowName = name;
-  Logs = l;
+  Logs = logs;
 }
 void Engine::start()
 {
-  InitWindow(WindowWidth, WindowHeight);
-  TimePoint1 = std::chrono::system_clock::now();
-  TimePoint2 = std::chrono::system_clock::now();
-  std::thread t = std::thread(&Engine::MainThread, this);
+  std::thread t = std::thread
+    (&Engine::Initialse, this);
   t.join();
 }
-// Engine::Engine(uint16_t width, uint16_t height)
-//   { InitWindow(width,height); }
-// Engine::Engine(uint16_t width, uint16_t height, Logger* logs)
-//   { Logs = logs; InitWindow(width,height); }
-//
-// Engine::~Engine()
-//   { CloseWindow(); }
+void Engine::Initialse()
+{
+  TimePoint1 = std::chrono::system_clock::now();
+  TimePoint2 = std::chrono::system_clock::now();
+  InitWindow(WindowWidth, WindowHeight);
+  MainThread();
+}
 
 
 void Engine::InitWindow(uint16_t width, uint16_t height)
@@ -130,19 +145,25 @@ void Engine::InitWindow(uint16_t width, uint16_t height)
     XRootWindow = DefaultRootWindow(XDisplay);
     XWindowNumber = DefaultScreen(XDisplay);
 
-    unsigned long black,white;
-    black = BlackPixel(XDisplay,0);
-    white = WhitePixel(XDisplay,0);
+    vi = glXChooseVisual(XDisplay, 0, attributes);
 
-    XWindow = XCreateSimpleWindow(XDisplay, XRootWindow, 0, 0, width, height, 0, white, black);
-    XSetStandardProperties(XDisplay,XWindow,WindowName.c_str(),"",None,NULL,0,NULL);
+    cmap = XCreateColormap(XDisplay, XRootWindow, vi->visual, AllocNone);
 
-    int InputMask = ButtonPressMask|KeyPressMask|PointerMotionMask;
-    XSelectInput(XDisplay,XWindow,InputMask);
+    swa.colormap = cmap;
+    swa.event_mask = ExposureMask | KeyPressMask | ButtonPressMask | PointerMotionMask;
 
-    XMapRaised(XDisplay,XWindow);
+    XWindow = XCreateWindow
+      (XDisplay, XRootWindow, 0, 0, WindowWidth, WindowHeight, 0,
+        vi->depth, InputOutput, vi->visual, CWColormap | CWEventMask, &swa);
+
+    //XMapRaised(XDisplay,XWindow);
     XMapWindow(XDisplay,XWindow);
-    XFlush(XDisplay);
+    XStoreName(XDisplay, XWindow, WindowName.c_str());
+    //XFlush(XDisplay);
+
+    glContext = glXCreateContext(XDisplay, vi, NULL, GL_TRUE);
+    glXMakeCurrent(XDisplay, XWindow, glContext);
+    glEnable(GL_DEPTH_TEST);
   #endif
 
 
@@ -162,6 +183,11 @@ void Engine::CloseWindow()
 
 }
 
+
+
+//---------------------------------------------------------//
+
+
 void Engine::MainThread()
 {
 
@@ -169,7 +195,7 @@ void Engine::MainThread()
   {
     CalcFrameTime();
 
-    if (timeCounter >= FPSLimit)
+    if (timeCounter >= FPSLimit) // Enters if enough time has passed (FPS Limt)
     {
       CoreUpdate();
       timeCounter = 0;
@@ -188,23 +214,6 @@ void Engine::CoreUpdate()
   userUpdate();
 }
 
-void Engine::CalcFrameTime()
-{
-  TimePoint2 = std::chrono::system_clock::now();
-  std::chrono::duration<float> a = TimePoint2 - TimePoint1;
-  elapsedTime = a.count();
-  TimePoint1 = TimePoint2;
-}
-
-void Engine::DisplayFPS()
-{
-  int FPS = (1 / (elapsedTime + FPSLimit)) + 1;
-  if ( FPS < 100000 ) // Lmao
-  {
-    std::string title = WindowName + " | FPS: " + std::to_string(FPS);
-    XStoreName(XDisplay, XWindow, title.c_str());
-  }
-}
 
 void Engine::EventHandler()
 {
@@ -213,6 +222,13 @@ void Engine::EventHandler()
   {
     XNextEvent(XDisplay, &events);
 
+    if (events.type == Expose)
+    {
+      XGetWindowAttributes(XDisplay, XWindow, &gwa);
+      glViewport(0, 0, gwa.width, gwa.height);
+      DrawRect(0,0,0,0,0,1);
+      glXSwapBuffers(XDisplay, XWindow);
+    }
     if (events.type == KeyPress)
     {
       //Key Pressed
@@ -243,5 +259,38 @@ int* Engine::getMousePos(XEvent* events)
   return MousePos;
 }
 
+
+
+void Engine::DrawRect(int x1, int y1, int x2, int y2, int col, bool full)
+{
+  glBegin(GL_QUADS);
+   glColor3f(1., 0., 0.); glVertex3f(-.75, -.75, 0.);
+   glColor3f(0., 1., 0.); glVertex3f( .75, -.75, 0.);
+   glColor3f(0., 0., 1.); glVertex3f( .75,  .75, 0.);
+   glColor3f(1., 1., 0.); glVertex3f(-.75,  .75, 0.);
+  glEnd();
+}
+
+
+
+
+
+void Engine::CalcFrameTime()
+{
+  TimePoint2 = std::chrono::system_clock::now();
+  std::chrono::duration<float> a = TimePoint2 - TimePoint1;
+  elapsedTime = a.count();
+  TimePoint1 = TimePoint2;
+}
+
+void Engine::DisplayFPS()
+{
+  int FPS = (1 / (elapsedTime + FPSLimit)) + 1;
+  if ( FPS < 1000 ) // Lmao
+  {
+    std::string title = WindowName + " | FPS: " + std::to_string(FPS);
+    XStoreName(XDisplay, XWindow, title.c_str());
+  }
+}
 
 #endif /* end of include guard: ENGINE */
