@@ -51,7 +51,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+<!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
 
 This is my Final Year Project as a student of Nottingham Trent University. I chose this project to gain experience in the X11 and Win32 apis, and OpenGL.
 
@@ -59,20 +59,6 @@ The purpose of this project is to create a lightweight, easy to use graphics fra
 
 _This Project is currently in the primary stages of development_
 
-Current Functionality:
-* 1
-* 2
-* 3
-
-In-Progress Functionality:
-* 1
-* 2
-* 3
-
-Planned Functionality:
-* 1
-* 2
-* 3
 
 
 ### Building the Project
@@ -92,10 +78,6 @@ instructions that need to be added
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
-
-See [Installation](#installation) and [Usage](#usage)
-
 
 ### Prerequisites
 
@@ -167,15 +149,15 @@ Bradley Smith - [Email](bradleysmith20000@gmail.com) - [LinkedIn](linkedin.com/i
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=flat-square
-[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
+[contributors-url]: https://github.com/N0822325/FYP/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=flat-square
-[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
+[forks-url]: https://github.com/N0822325/FYP/network/members
 [stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=flat-square
-[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
+[stars-url]: https://github.com/N0822325/FYP/stargazers
 [issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=flat-square
-[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
+[issues-url]: https://github.com/N0822325/FYP/issues
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=flat-square
-[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
+[license-url]: https://github.com/N0822325/FYP/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/bradley-smith-9b82641bb
 [product-screenshot]: images/screenshot.png
