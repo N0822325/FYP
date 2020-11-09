@@ -1,5 +1,181 @@
-# FYP
-3D Game Engine
 
-compile with gcc using following flags
--lX11 -lGL -lGLU -lpthread
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
+
+
+
+<!-- PROJECT LOGO -->
+<br />
+<p align="center">
+  <a href="https://github.com/othneildrew/Best-README-Template">
+    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  </a>
+
+  <h3 align="center">Graphics Engine for Game Development</h3>
+
+  <p align="center">
+    A Lightweight and Easy to use OpenGL Powered Library
+    <br />
+    <a href="https://google.com"><strong>Explore the Documentation »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
+  </p>
+</p>
+
+
+
+<!-- TABLE OF CONTENTS -->
+## Table of Contents
+
+* [About the Project](#about-the-project)
+  * [Built With](#building-the-project)
+* [Getting Started](#getting-started)
+  * [Prerequisites](#prerequisites)
+  * [Installation](#installation)
+* [Usage](#usage)
+* [Roadmap](#roadmap)
+* [Contributing](#contributing)
+* [License](#license)
+* [Contact](#contact)
+* [Acknowledgements](#acknowledgements)
+
+
+
+<!-- ABOUT THE PROJECT -->
+## About The Project
+
+[![Product Name Screen Shot][product-screenshot]](https://example.com)
+
+This is my Final Year Project as a student of Nottingham Trent University. I chose this project to gain experience in the X11 and Win32 apis, and OpenGL.
+
+The purpose of this project is to create a lightweight, easy to use graphics framework with 3D and 2D functionality for c++ game development.
+
+_This Project is currently in the primary stages of development_
+
+Current Functionality:
+* 1
+* 2
+* 3
+
+In-Progress Functionality:
+* 1
+* 2
+* 3
+
+Planned Functionality:
+* 1
+* 2
+* 3
+
+
+### Building the Project
+[Linux]
+* Using the GCC Compiler
+```sh
+gcc [Program.cpp] -lX11 -lGL -lGLU -lpthread
+```
+
+[Windows]
+* Needs to be added
+```sh
+instructions that need to be added
+```
+
+
+
+<!-- GETTING STARTED -->
+## Getting Started
+
+
+See [Installation](#installation) and [Usage](#usage)
+
+
+### Prerequisites
+
+There are no prerequisites right now :)
+
+
+### Installation
+
+Clone the repo
+```sh
+git clone https://github.com/N0822325/FYP
+```
+
+
+<!-- USAGE EXAMPLES -->
+## Usage
+
+1. Include `Engine.h`
+2. Create your cpp file
+3. Make a new Class and Inherit 'Class Engine'
+4. Call [construct()](https://example.com) and [start()](https://example.com)
+5. override virtual function [userUpdate()](https://example.com)
+
+_For more Functionality, Please Refer to the [Documentation](https://example.com)_
+
+
+
+<!-- ROADMAP -->
+## Roadmap
+
+See the [open issues](https://github.com/N0822325/FYP/issues) for a list of proposed features (and known issues).
+
+
+
+<!-- CONTRIBUTING -->
+## Contributing
+
+Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+
+
+<!-- LICENSE -->
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+
+
+<!-- CONTACT -->
+## Contact
+
+Bradley Smith - [Email](bradleysmith20000@gmail.com) - [LinkedIn](linkedin.com/in/bradley-smith-9b82641bb)
+
+
+
+<!-- ACKNOWLEDGEMENTS -->
+## Acknowledgements
+* [Readme Template](https://github.com/othneildrew/Best-README-Template)
+
+
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
+[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=flat-square
+[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=flat-square
+[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
+[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=flat-square
+[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
+[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=flat-square
+[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
+[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=flat-square
+[license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
+[linkedin-url]: https://linkedin.com/in/bradley-smith-9b82641bb
+[product-screenshot]: images/screenshot.png
