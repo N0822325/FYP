@@ -18,7 +18,7 @@
   <h3 align="center">Graphics Engine for Game Development</h3>
 
   <p align="center">
-    A Lightweight and Easy to use, OpenGL Powered Grpahics Library
+    A Lightweight and Easy to use, OpenGL Powered Graphics Library
     <br />
     <a href="https://google.com"><strong>Explore the Documentation »</strong></a>
     <br />
@@ -115,7 +115,7 @@ See the [open issues](https://github.com/N0822325/FYP/issues) for a list of prop
 <!-- CONTRIBUTING -->
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Want to add some much needed functionality? Then follow these steps and I'll merge it into the main branch :smile:
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
