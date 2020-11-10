@@ -18,7 +18,7 @@
   <h3 align="center">Graphics Engine for Game Development</h3>
 
   <p align="center">
-    A Lightweight and Easy to use OpenGL Powered Library
+    A Lightweight and Easy to use, OpenGL Powered Grpahics Library
     <br />
     <a href="https://google.com"><strong>Explore the Documentation »</strong></a>
     <br />
@@ -53,9 +53,9 @@
 
 <!-- [![Product Name Screen Shot][product-screenshot]](https://example.com) -->
 
-This is my Final Year Project as a student of Nottingham Trent University. I chose this project to gain experience in the X11 and Win32 apis, and OpenGL.
+This is my Final Year Project as a student of Nottingham Trent University. I chose this project to gain experience in the X11 and Win32 apis, and OpenGL development.
 
-The purpose of this project is to create a lightweight, easy to use graphics framework with 3D and 2D functionality for c++ game development.
+The purpose of this project is to create a lightweight, easy to use graphics framework with 2D and 3D functionality for c++ game development.
 
 _This Project is currently in the primary stages of development_
 
@@ -128,14 +128,14 @@ Contributions are what make the open source community such an amazing place to b
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See `LICENSE.md` for more information.
 
 
 
 <!-- CONTACT -->
 ## Contact
 
-Bradley Smith - [Email](bradleysmith20000@gmail.com) - [LinkedIn](linkedin.com/in/bradley-smith-9b82641bb)
+Bradley Smith - bradleysmith20000@gmail.com - [LinkedIn](https://linkedin.com/in/bradley-smith-9b82641bb)
 
 
 
@@ -157,7 +157,7 @@ Bradley Smith - [Email](bradleysmith20000@gmail.com) - [LinkedIn](linkedin.com/i
 [issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=flat-square
 [issues-url]: https://github.com/N0822325/FYP/issues
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=flat-square
-[license-url]: https://github.com/N0822325/FYP/blob/master/LICENSE.txt
+[license-url]: https://github.com/N0822325/FYP/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/bradley-smith-9b82641bb
 [product-screenshot]: images/screenshot.png
