@@ -18,7 +18,7 @@
   <h3 align="center">Graphics Engine for Game Development</h3>
 
   <p align="center">
-    A Lightweight and Easy to use, OpenGL Powered Graphics Library
+    A Lightweight and Easy to use, OpenGL Powered Graphics Framework
     <br />
     <a href="https://google.com"><strong>Explore the Documentation »</strong></a>
     <br />
@@ -135,7 +135,7 @@ Distributed under the MIT License. See `LICENSE.md` for more information.
 <!-- CONTACT -->
 ## Contact
 
-Bradley Smith - bradleysmith20000@gmail.com - [LinkedIn](https://linkedin.com/in/bradley-smith-9b82641bb)
+Bradley Smith - bradleysmith20000@gmail.com - N0822325@my.ntu.ac.uk - [LinkedIn](https://linkedin.com/in/bradley-smith-9b82641bb)
 
 
 
@@ -148,16 +148,16 @@ Bradley Smith - bradleysmith20000@gmail.com - [LinkedIn](https://linkedin.com/in
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=flat-square
+[contributors-shield]: https://img.shields.io/github/contributors/N0822325/FYP.svg?style=flat-square
 [contributors-url]: https://github.com/N0822325/FYP/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=flat-square
+[forks-shield]: https://img.shields.io/github/forks/N0822325/FYP.svg?style=flat-square
 [forks-url]: https://github.com/N0822325/FYP/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=flat-square
+[stars-shield]: https://img.shields.io/github/stars/N0822325/FYP.svg?style=flat-square
 [stars-url]: https://github.com/N0822325/FYP/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=flat-square
+[issues-shield]: https://img.shields.io/github/issues/N0822325/FYP.svg?style=flat-square
 [issues-url]: https://github.com/N0822325/FYP/issues
-[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=flat-square
-[license-url]: https://github.com/N0822325/FYP/LICENSE.md
+[license-shield]: https://img.shields.io/github/license/N0822325/FYP.svg?style=flat-square
+[license-url]: FYP/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/bradley-smith-9b82641bb
 [product-screenshot]: images/screenshot.png
