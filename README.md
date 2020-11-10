@@ -11,8 +11,8 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+  <a href="https://github.com/N0822325/FYP">
+    <img src="Resources/FYP.png" alt="Logo" width="80" height="80">
   </a>
 
   <h3 align="center">Graphics Engine for Game Development</h3>
@@ -23,9 +23,9 @@
     <a href="https://google.com"><strong>Explore the Documentation »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
+    <a href="https://github.com/N0822325/FYP/issues">Report Bug</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
+    <a href="https://github.com/N0822325/FYP/issues">Request Feature</a>
   </p>
 </p>
 
