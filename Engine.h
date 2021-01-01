@@ -1,6 +1,8 @@
 #ifndef ENGINE
   #define ENGINE
 
+  #define GL_GLEXT_PROTOTYPES
+
   #if defined(__linux__)
     #include <GL/gl.h>
     #include <GL/glx.h>
@@ -16,15 +18,12 @@
   #endif
 
   #include "Logger.h"
+  #include "Renderer.h"
   #include <iostream>
   #include <string>
   #include <thread>
   #include <unistd.h>
   #include <time.h>
-
-  void DrawAQuad() {
-
-  }
 
 //---------------------------------------------------------//
 
@@ -42,13 +41,15 @@ public:
 
   void construct(uint16_t width, uint16_t height, std::string name, Logger* logs);
   void start();
-  virtual void userCreate(){};
+  virtual void userInitialse(){};
   virtual void userUpdate(){};
+
+  objt* Quad(int x1, int y1, int width, int height, int col, bool full);
 
   // void Draw(int x, int y, int col);
   // void DrawLine(int x1, int y1, int x2, int y2, int col);
-  void DrawRect(int x1, int y1, int x2, int y2, int col, bool full);
-  // void DrawTri(int x, int y, int w, int h, int col, bool full);
+  //void DrawRect(int x1, int y1, int x2, int y2, int col, bool full);
+  //void DrawTri(int x, int y, int w, int h, int col, bool full);
   // void DrawCircle(int x, int y, int r, int col, bool full);
 
   //void DrawSprite(int x, int y, Sprite s, xScale xs, yScale ys);
@@ -69,6 +70,7 @@ private:
   void Initialse();
   void MainThread();
   void CoreUpdate();
+  void Draw();
   void EventHandler();
 
   void InitWindow(uint16_t width, uint16_t height);
@@ -78,7 +80,7 @@ private:
 
 
   void CalcFrameTime();
-  void DisplayFPS();
+  void DisplayFPSThread();
 
   Logger* Logs;
 
@@ -91,19 +93,26 @@ private:
     Window XWindow;
     Window XRootWindow;
     int XWindowNumber;
+
+    XVisualInfo *vi;
+    XWindowAttributes gwa;
+    XSetWindowAttributes swa;
   #endif
 
   //GL
+  Renderer renderer;
+  Shader shader;
+  void InitShaders();
   Colormap cmap;
-  XVisualInfo *vi;
-  XWindowAttributes gwa;
-  XSetWindowAttributes swa;
   GLXContext glContext;
   GLint attributes[5] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
+
+  std::vector<objt*> ObjectList;
   //
 
+  bool Initialised = false;
 
-  float FPSLimit = 0.01;
+  float FPSLimit = 1.0/60.0; //---1/FPS---//
   float timeCounter = 0;
   float elapsedTime = 0;
   std::chrono::time_point<std::chrono::system_clock> TimePoint1, TimePoint2;
@@ -125,15 +134,30 @@ void Engine::construct(uint16_t width, uint16_t height, std::string name = "", L
 }
 void Engine::start()
 {
-  std::thread t = std::thread
+
+  XInitThreads();
+
+  std::thread main = std::thread
     (&Engine::Initialse, this);
-  t.join();
+
+
+  std::thread fps = std::thread
+    (&Engine::DisplayFPSThread, this);
+
+  main.join();
+  fps.join();
+
 }
 void Engine::Initialse()
 {
   TimePoint1 = std::chrono::system_clock::now();
   TimePoint2 = std::chrono::system_clock::now();
+  srand(time(NULL));
+
   InitWindow(WindowWidth, WindowHeight);
+  InitShaders();
+
+  userInitialse();
   MainThread();
 }
 
@@ -150,7 +174,8 @@ void Engine::InitWindow(uint16_t width, uint16_t height)
     cmap = XCreateColormap(XDisplay, XRootWindow, vi->visual, AllocNone);
 
     swa.colormap = cmap;
-    swa.event_mask = ExposureMask | KeyPressMask | ButtonPressMask | PointerMotionMask;
+    swa.event_mask = ExposureMask | StructureNotifyMask |
+                      KeyPressMask | ButtonPressMask | PointerMotionMask;
 
     XWindow = XCreateWindow
       (XDisplay, XRootWindow, 0, 0, WindowWidth, WindowHeight, 0,
@@ -161,9 +186,9 @@ void Engine::InitWindow(uint16_t width, uint16_t height)
     XStoreName(XDisplay, XWindow, WindowName.c_str());
     //XFlush(XDisplay);
 
-    glContext = glXCreateContext(XDisplay, vi, NULL, GL_TRUE);
-    glXMakeCurrent(XDisplay, XWindow, glContext);
-    glEnable(GL_DEPTH_TEST);
+    renderer.linkDisplay(XDisplay, &XWindow, vi);
+
+    Initialised = true;
   #endif
 
 
@@ -171,6 +196,7 @@ void Engine::InitWindow(uint16_t width, uint16_t height)
     //WHOMEGALUL
   #endif
 
+  //Initialised = true;
 }
 
 void Engine::CloseWindow()
@@ -181,6 +207,7 @@ void Engine::CloseWindow()
     XCloseDisplay(XDisplay);
   #endif
 
+  Initialised = false;
 }
 
 
@@ -191,13 +218,16 @@ void Engine::CloseWindow()
 void Engine::MainThread()
 {
 
+
   while(true)
   {
     CalcFrameTime();
 
     if (timeCounter >= FPSLimit) // Enters if enough time has passed (FPS Limt)
     {
+
       CoreUpdate();
+
       timeCounter = 0;
     }
     else
@@ -209,9 +239,27 @@ void Engine::MainThread()
 
 void Engine::CoreUpdate()
 {
-  DisplayFPS();
+
+  glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   EventHandler();
   userUpdate();
+
+  Draw();
+  //
+  glXSwapBuffers(XDisplay, XWindow);
+}
+
+void Engine::Draw()
+{
+
+  for (objt* o : ObjectList)
+  {
+    o->draw();
+  }
+
 }
 
 
@@ -222,20 +270,24 @@ void Engine::EventHandler()
   {
     XNextEvent(XDisplay, &events);
 
-    if (events.type == Expose)
+    if (events.type == Expose) // On Window Init
+    {
+
+    }
+    if (events.type == ConfigureNotify) // On Window Property Change - i.e. resize
     {
       XGetWindowAttributes(XDisplay, XWindow, &gwa);
       glViewport(0, 0, gwa.width, gwa.height);
-      DrawRect(0,0,0,0,0,1);
-      glXSwapBuffers(XDisplay, XWindow);
     }
+
+
     if (events.type == KeyPress)
     {
-      //Key Pressed
+      // Key Pressed
     }
     else if (events.type == KeyRelease)
     {
-      //Key Released
+      // Key Released
     }
     else if(events.type == MotionNotify)
     {
@@ -249,29 +301,82 @@ int* Engine::getMousePos(XEvent* events)
   MousePos[0] = events->xbutton.x;
   MousePos[1] = events->xbutton.y;
 
-  #if defined(DEBUG)
-    using namespace std;
-    std::string value = "X: " + to_string(MousePos[0]) + " | "
-                      + "Y: " + to_string(MousePos[1]);
-    Logs->log(3, &value);
-  #endif
-
   return MousePos;
 }
 
-
-
-void Engine::DrawRect(int x1, int y1, int x2, int y2, int col, bool full)
+void Engine::InitShaders()
 {
-  glBegin(GL_QUADS);
-   glColor3f(1., 0., 0.); glVertex3f(-.75, -.75, 0.);
-   glColor3f(0., 1., 0.); glVertex3f( .75, -.75, 0.);
-   glColor3f(0., 0., 1.); glVertex3f( .75,  .75, 0.);
-   glColor3f(1., 1., 0.); glVertex3f(-.75,  .75, 0.);
-  glEnd();
+
+  shader.setShader();
+
 }
 
+objt* Engine::Quad(int x1_, int y1_, int width, int height, int col, bool full)
+{
 
+  float x1 = ((float)x1_/WindowWidth)-1;
+  float y1 = ((float)y1_/WindowHeight)-1;
+  float x2 = (float)(x1_+width)/WindowWidth;
+  float y2 = (float)(y1_+height)/WindowHeight;
+  std::cout << x1 << y1 << x2 << y2 << std::endl;
+
+  float vertices[] = {
+    x2, y1, 0.0f, // top right         3------0
+    x2, y2, 0.0f, // bottom right      |      |
+    x1, y2, 0.0f, // bottom left       |      |
+    x1, y1, 0.0f // top left           2------1
+  };
+  unsigned int indices[] = {
+    0, 1, 2, // first triangle
+    2, 3, 0 // second triangle
+  };
+
+  objt* aaaaaa = new objt(vertices, indices, &shader, &renderer);
+  ObjectList.push_back(aaaaaa);
+
+  return ObjectList.back();
+
+}
+
+// void Engine::DrawTri(int x, int y, int w, int h, int col, bool full)
+// {
+//
+//   float verticies[] = {
+//     -0.5f, -0.5f, 0.0f,
+//     0.5f, -0.5f, 0.0f,
+//     0.0f, 0.5f, 0.0f
+//   };
+//   shader.bind();
+//
+//   unsigned int VertexBuffer;
+//
+//   glGenBuffers(1, &VertexBuffer);
+//   glBindBuffer(GL_ARRAY_BUFFER, VertexBuffer);
+//   glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
+//
+//   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+//   glEnableVertexAttribArray(0);
+//
+// }
+//
+// void Engine::DrawRect(int x1, int y1, int x2, int y2, int col, bool full)
+// {
+//
+//   float vertices[] = {
+//     0.5f, 0.5f, 0.0f, // top right         3------0
+//     0.5f, -0.5f, 0.0f, // bottom right     |      |
+//     -0.5f, -0.5f, 0.0f, // bottom left     |      |
+//     -0.5f, 0.5f, 0.0f // top left          2------1
+//   };
+//   unsigned int indices[] = {
+//     0, 1, 2, // first triangle
+//     2, 3, 0 // second triangle
+//   };
+//
+//   objt* aaaaaa = new objt(vertices, indices, &shader, &renderer);
+//   ObjectList.push_back(aaaaaa);
+//
+// }
 
 
 
@@ -283,11 +388,13 @@ void Engine::CalcFrameTime()
   TimePoint1 = TimePoint2;
 }
 
-void Engine::DisplayFPS()
+void Engine::DisplayFPSThread()
 {
-  int FPS = (1 / (elapsedTime + FPSLimit)) + 1;
-  if ( FPS < 1000 ) // Lmao
-  {
+  while(!Initialised) {}
+  while(Initialised){
+    sleep(1);
+    int FPS = (1 / (elapsedTime + FPSLimit)) + 1;
+
     std::string title = WindowName + " | FPS: " + std::to_string(FPS);
     XStoreName(XDisplay, XWindow, title.c_str());
   }

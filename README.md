@@ -157,7 +157,7 @@ Bradley Smith - bradleysmith20000@gmail.com - N0822325@my.ntu.ac.uk - [LinkedIn]
 [issues-shield]: https://img.shields.io/github/issues/N0822325/FYP.svg?style=flat-square
 [issues-url]: https://github.com/N0822325/FYP/issues
 [license-shield]: https://img.shields.io/github/license/N0822325/FYP.svg?style=flat-square
-[license-url]: FYP/LICENSE.md
+[license-url]: LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/bradley-smith-9b82641bb
 [product-screenshot]: images/screenshot.png

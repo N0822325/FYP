@@ -16,6 +16,11 @@ public:
     start();
   }
 
+  void userInitialse() override
+  {
+    objt* a = Quad(10,10,480,480,0,1);
+  }
+
   void userUpdate() override
   {
 
