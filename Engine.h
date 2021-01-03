@@ -37,13 +37,15 @@ public:
   // Engine(uint16_t width, uint16_t height, Logger* logs);
   // ~Engine();
 
-public:
 
+protected:
   void construct(uint16_t width, uint16_t height, std::string name, Logger* logs);
   void start();
   virtual void userInitialse(){};
   virtual void userUpdate(){};
 
+
+public:
   objt* Quad(int x1, int y1, int width, int height, int col, bool full);
 
   // void Draw(int x, int y, int col);
@@ -199,6 +201,13 @@ void Engine::InitWindow(uint16_t width, uint16_t height)
   //Initialised = true;
 }
 
+void Engine::InitShaders()
+{
+
+  shader.setShader();
+
+}
+
 void Engine::CloseWindow()
 {
 
@@ -304,21 +313,17 @@ int* Engine::getMousePos(XEvent* events)
   return MousePos;
 }
 
-void Engine::InitShaders()
-{
 
-  shader.setShader();
-
-}
 
 objt* Engine::Quad(int x1_, int y1_, int width, int height, int col, bool full)
 {
+  int windowWidth = WindowWidth/2;
+  int windowHeight = WindowHeight/2;
 
-  float x1 = ((float)x1_/WindowWidth)-1;
-  float y1 = ((float)y1_/WindowHeight)-1;
-  float x2 = (float)(x1_+width)/WindowWidth;
-  float y2 = (float)(y1_+height)/WindowHeight;
-  std::cout << x1 << y1 << x2 << y2 << std::endl;
+  float x1 = ((float)(x1_)/windowWidth)-1;
+  float y1 = ((float)(y1_)/windowHeight)-1;
+  float x2 = ((float)(x1_+width)/windowWidth)-1;
+  float y2 = ((float)(y1_+height)/windowHeight)-1;
 
   float vertices[] = {
     x2, y1, 0.0f, // top right         3------0
@@ -335,7 +340,6 @@ objt* Engine::Quad(int x1_, int y1_, int width, int height, int col, bool full)
   ObjectList.push_back(aaaaaa);
 
   return ObjectList.back();
-
 }
 
 // void Engine::DrawTri(int x, int y, int w, int h, int col, bool full)
@@ -358,26 +362,6 @@ objt* Engine::Quad(int x1_, int y1_, int width, int height, int col, bool full)
 //   glEnableVertexAttribArray(0);
 //
 // }
-//
-// void Engine::DrawRect(int x1, int y1, int x2, int y2, int col, bool full)
-// {
-//
-//   float vertices[] = {
-//     0.5f, 0.5f, 0.0f, // top right         3------0
-//     0.5f, -0.5f, 0.0f, // bottom right     |      |
-//     -0.5f, -0.5f, 0.0f, // bottom left     |      |
-//     -0.5f, 0.5f, 0.0f // top left          2------1
-//   };
-//   unsigned int indices[] = {
-//     0, 1, 2, // first triangle
-//     2, 3, 0 // second triangle
-//   };
-//
-//   objt* aaaaaa = new objt(vertices, indices, &shader, &renderer);
-//   ObjectList.push_back(aaaaaa);
-//
-// }
-
 
 
 void Engine::CalcFrameTime()

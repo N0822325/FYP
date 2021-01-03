@@ -168,19 +168,23 @@ public:
   void setShader()
   {
     const char *vertexShaderSource =
-      "#version 330 core\n"
-      "layout (location = 0) in vec3 aPos;\n"
+      "#version 300 es\n"
+      "layout (location = 0) in vec3 position;\n"
+      "out vec4 vertexColour;\n"
       "void main()\n"
       "{\n"
-      " gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-      "}\0";
+      "     gl_Position = vec4(position, 1.0);\n"
+      "     vertexColour = vec4(0.5f, 0.0f, 0.0f, 1.0f);\n"
+      "}\n";
 
     const char *fragmentShaderSource =
-      "#version 330 core\n"
-      "out vec4 FragColor;\n"
+      "#version 300 es\n"
+      "precision mediump float;\n"
+      "in vec4 vertexColour;\n"
+      "out vec4 colour;\n"
       "void main()\n"
       "{\n"
-      "FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+      "     colour = vertexColour;\n"
       "}\n";
 
     VertexShaderSource = vertexShaderSource;
@@ -210,6 +214,23 @@ private:
     glShaderSource(shader, 1, &source, nullptr);
     glCompileShader(shader);
 
+// Program Compile Check //
+    GLint isCompiled = 0;
+    glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
+    if(isCompiled == GL_FALSE)
+    {
+    	GLint maxLength = 0;
+    	glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+
+    	std::vector<GLchar> errorLog(maxLength);
+    	glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
+
+      for(int i = 0; i < maxLength; i++)
+        { std::cout << errorLog[i]; } // Print Error
+      std::cout << std::endl;
+    }
+// ~~~~~~~~~~~~ //
+
     return shader;
   }
   unsigned int CreateShader()
@@ -226,6 +247,13 @@ private:
 
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+
+// Shader Compile Error Check //
+    int success;
+    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    if(!success)
+      { std::cout << "Shader Compiler Error" << std::endl; }
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~ //
 
     return shaderProgram;
   }
@@ -247,9 +275,9 @@ public:
     glEnable(GL_DEPTH_TEST);
   }
 
-  void draw(VertexArray& va, VertexBuffer& vb, ElementBuffer& eb, Shader& shader)
+  void draw(VertexArray& va, VertexBuffer& vb, ElementBuffer& eb, Shader* shader)
   {
-    shader.bind();
+    shader->bind();
     va.bind();
     eb.bind();
     glDrawElements(GL_TRIANGLES, eb.getCount(), GL_UNSIGNED_INT, nullptr);
@@ -286,7 +314,7 @@ public:
 
   void draw()
   {
-    renderer->draw(va, vb, eb, *shader);
+    renderer->draw(va, vb, eb, shader);
   }
 };
 
