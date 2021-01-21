@@ -35,10 +35,10 @@
 ## Table of Contents
 
 * [About the Project](#about-the-project)
-  * [Built With](#building-the-project)
 * [Getting Started](#getting-started)
   * [Prerequisites](#prerequisites)
   * [Installation](#installation)
+  * [Built With](#building-the-project)
 * [Usage](#usage)
 * [Roadmap](#roadmap)
 * [Contributing](#contributing)
@@ -61,21 +61,6 @@ _This Project is currently in the primary stages of development_
 
 
 
-### Building the Project
-[Linux]
-* Using the GCC Compiler
-```sh
-gcc [Program.cpp] -lX11 -lGL -lGLU -lpthread
-```
-
-[Windows]
-* Needs to be added
-```sh
-instructions that need to be added
-```
-
-
-
 <!-- GETTING STARTED -->
 ## Getting Started
 
@@ -95,14 +80,42 @@ git clone https://github.com/N0822325/FYP
 <!-- USAGE EXAMPLES -->
 ## Usage
 
-1. Include `Engine.h`
-2. Create your cpp file
+1. Create your cpp file
+2. Include `Engine.h`
 3. Make a new Class and Inherit 'Class Engine'
 4. Call [construct()](https://example.com) and [start()](https://example.com)
 5. override virtual function [userUpdate()](https://example.com)
 
 _For more Functionality, Please Refer to the [Documentation](https://example.com)_
 
+
+### Building the Project
+[Linux]
+* Make sure the mesa-utils package is installed
+
+Using the GCC Compiler
+```sh
+gcc [Program.cpp] -lX11 -lGL -lGLU -lpthread
+```
+
+[Windows]
+
+Visual Studio
+* Create a new project
+* Add header files to the project, and create / add example main program file
+* Disable Unicode by right clicking project -> Properties -> Advanced -> Character Set, and change it to Multi-Byte
+* Run the main program to compile
+
+VS Code / MINGW Compiler
+* Download and install the mingw compiler
+* Add mingw to the windows PATH environment by searching "Edit environment variables" -> Click Path then Edit -> Click New then add the path to mingws' bin folder (default is C:\Program Files\mingw-w64\ . . .\mingw64\bin)
+* [VSC] Install C/C++ Extension for VS Code
+
+Compile in Terminal
+* Follow previous steps in installing mingw then execute the following to compile program from terminal
+```sh
+gcc [Program.cpp] -lstdc++ -lopengl32
+```
 
 
 <!-- ROADMAP -->
