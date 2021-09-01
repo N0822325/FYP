@@ -1,17 +1,30 @@
 #ifndef RENDERER
   #define RENDERER
 
+  #define PATH "Application/"
+
+  #include "Camera.h"
+
   #define GL_GLEXT_PROTOTYPES
   #include <GL/gl.h>
   #include <GL/glx.h>
   #include <GL/glu.h>
 
+  #include <glm/glm.hpp>
+  #include <glm/gtc/matrix_transform.hpp>
+  #include <glm/gtc/type_ptr.hpp>
+
+
   #include <X11/X.h>
   #include <X11/Xlib.h>
   #include <X11/Xutil.h>
 
+  #define STB_IMAGE_IMPLEMENTATION
+  #include "Libraries/stb_image.h"
+
   #include <vector>
   #include <iostream>
+  #include <fstream>
 
 class VertexBuffer
 {
@@ -93,7 +106,8 @@ public:
   void push(unsigned int count)
   {
     List.push_back({ GL_FLOAT, count, false });
-    //Stride += sizeof(GL_FLOAT);
+    Stride += count;
+    // Stride += sizeof(GL_FLOAT);
   }
 
   std::vector<VertexArrayNode> getList()
@@ -102,7 +116,7 @@ public:
   }
   unsigned int getStride()
   {
-    return Stride;
+    return Stride * sizeof(GL_FLOAT);
   }
 
 };
@@ -130,12 +144,19 @@ public:
     for (unsigned int i = 0; i < e.size(); i++)
     {
       const auto& node = e[i];
+// std::cout << "First: " << i << std::endl << "Second: " << node.count << std::endl << "Third: " << node.type << std::endl << "Fourth: " << node.normalised << std::endl << "Fith: " << layout.getStride() << std::endl << "Sixth: " << offset << std::endl << std::endl;
+
       glEnableVertexAttribArray(i);
+      glVertexAttribPointer(
+        i,
+        node.count,
+        node.type,
+        node.normalised,
+        layout.getStride(),               // Stride
+        (void*)(offset*sizeof(node.type)  // Offset
+      ));
 
-      glVertexAttribPointer(i, node.count, node.type,
-        node.normalised, layout.getStride(), (void*)offset);
-
-      offset += node.count * sizeof(node.type);
+      offset += node.count;
     }
   }
 
@@ -148,6 +169,9 @@ public:
     glBindVertexArray(0);
   }
 };
+
+
+
 
 class Shader
 {
@@ -165,32 +189,31 @@ public:
     glDeleteProgram(ShaderID);
   }
 
+  std::string readShaderFile(std::string filename)
+  {
+    std::ifstream File(filename);
+    std::string line, text;
+    while(std::getline(File, line))
+    {
+      text += line + "\n";
+    }
+    return text;
+  }
+
   void setShader()
   {
-    const char *vertexShaderSource =
-      "#version 300 es\n"
-      "layout (location = 0) in vec3 position;\n"
-      "out vec4 vertexColour;\n"
-      "void main()\n"
-      "{\n"
-      "     gl_Position = vec4(position, 1.0);\n"
-      "     vertexColour = vec4(0.5f, 0.0f, 0.0f, 1.0f);\n"
-      "}\n";
+    std::string pathString(PATH);
 
-    const char *fragmentShaderSource =
-      "#version 300 es\n"
-      "precision mediump float;\n"
-      "in vec4 vertexColour;\n"
-      "out vec4 colour;\n"
-      "void main()\n"
-      "{\n"
-      "     colour = vertexColour;\n"
-      "}\n";
+    std::string vShader = readShaderFile(pathString + "Vertex.shader");
+    const char *vertexShaderSource = vShader.c_str();
+
+    std::string fShader = readShaderFile(pathString + "Fragment.shader");
+    const char *fragmentShaderSource = fShader.c_str();
+
 
     VertexShaderSource = vertexShaderSource;
     FragmentShaderSource = fragmentShaderSource;
     ShaderID = CreateShader();
-
   }
 
   void bind()
@@ -204,7 +227,18 @@ public:
 
   void setUniform4f(float v0, float v1, float v2, float v3)
   {
-
+    int location = glGetUniformLocation(ShaderID, "u_Colour");
+    glUniform4f(location, v0, v1, v2, v3);
+  }
+  void setUniformMat4f(std::string name, glm::mat4& matrix)
+  {
+    int location = glGetUniformLocation(ShaderID, name.c_str());
+    glUniformMatrix4fv(location, 1, GL_FALSE, &matrix[0][0]);
+  }
+  void setUniform1i(std::string name, int value)
+  {
+    int location = glGetUniformLocation(ShaderID, name.c_str());
+    glUniform1i(location, value);
   }
 
 private:
@@ -257,16 +291,97 @@ private:
 
     return shaderProgram;
   }
-  // unsigned int GetUniformLocation()
-  // {
-  //
-  // }
+
 };
+
+
+class Texture
+{
+private:
+  Shader* shader;
+  unsigned int renderID;
+  std::string file;
+  unsigned int texture;
+  unsigned char* localBuffer;
+  int width, height, bpp;
+
+
+public:
+  bool isTextured;
+  float col[4] {1,1,1,1};
+
+  Texture(const std::string& path)
+    : renderID(0), file(path), localBuffer(nullptr), width(0), height(0), bpp(0)
+  {
+    if(path.empty()) { isTextured = false; return; }
+    isTextured = true;
+
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    //stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+    unsigned char *data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+    if (data)
+    {
+       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+       glGenerateMipmap(GL_TEXTURE_2D);
+
+       // slot = totalTextures;
+       // totalTextures++;
+    }
+    else
+    {
+       std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+    enableBlend();
+  }
+  ~Texture() { glDeleteTextures(1, &texture); }
+
+  void bind()
+  {
+    glActiveTexture(GL_TEXTURE0); //+ slot
+    glBindTexture(GL_TEXTURE_2D, texture);
+  }
+  void unbind() { glBindTexture(GL_TEXTURE_2D, 0); }
+
+  void enableBlend()
+  {
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable(GL_BLEND);
+  }
+
+  Texture* get() { return this; }
+  // int getSlot() { return slot; }
+
+  int getWidth() { return width; }
+  int getHeight() { return height; }
+};
+
 
 
 class Renderer
 {
+private:
+  GLXContext glContext;
+  Camera* camera;
+
 public:
+
+  void setCamera(Camera* newCam)
+  {
+    camera = newCam;
+  }
 
   void linkDisplay(Display* XDisplay, Window* XWindow, XVisualInfo* vi)
   {
@@ -275,48 +390,27 @@ public:
     glEnable(GL_DEPTH_TEST);
   }
 
-  void draw(VertexArray& va, VertexBuffer& vb, ElementBuffer& eb, Shader* shader)
+  void draw(VertexArray& va, VertexBuffer& vb, ElementBuffer& eb,
+    Shader* shader, Texture* texture, glm::mat4 model, int drawOption = GL_TRIANGLES)
   {
     shader->bind();
+    texture->bind();
+
+    glm::mat4 projection = camera->getProjection();
+    glm::mat4 view = camera->getCamera();
+
+    glm::mat4 mvp = projection * view * model;
+    shader->setUniformMat4f("transform", mvp);
+    shader->setUniform1i("isTextured", texture->isTextured);
+    shader->setUniform4f(texture->col[0], texture->col[1], texture->col[2], texture->col[3]);
+
     va.bind();
     eb.bind();
-    glDrawElements(GL_TRIANGLES, eb.getCount(), GL_UNSIGNED_INT, nullptr);
+    glDrawElements(drawOption, eb.getCount(), GL_UNSIGNED_INT, nullptr);
   }
 
-
-private:
-  GLXContext glContext;
 };
 
-
-class objt
-{
-private:
-  VertexArray va;
-  VertexArrayList ls;
-  VertexBuffer vb;
-  ElementBuffer eb;
-  Shader* shader;
-  Renderer* renderer;
-
-public:
-  objt(float vertices[], unsigned int indices[], Shader* shader_, Renderer* renderer_)
-    : vb(vertices, 4 * 3 * sizeof(float)), eb(indices, 6)
-  {
-
-    shader = shader_;
-    renderer = renderer_;
-
-    ls.push(3);
-    va.addBuffer(vb, ls);
-
-  }
-
-  void draw()
-  {
-    renderer->draw(va, vb, eb, shader);
-  }
-};
 
 
 #endif /* end of include guard: RENDERER */
