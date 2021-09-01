@@ -1,7 +1,7 @@
 #ifndef RENDERER
   #define RENDERER
 
-  #define PATH "Application/"
+  #define PATH "FYP/"
 
   #include "Camera.h"
 
