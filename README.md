@@ -78,8 +78,11 @@ git clone https://github.com/N0822325/FYP
 
 
 <!-- USAGE EXAMPLES -->
+## Examples
+See these examples for how to structure your project
+1. (2D) Pong    - https://github.com/N0822325/FYP-Pong
+2. (3D) Sandbox - https://github.com/N0822325/FYP-Sandbox
 ## Usage
-
 1. Create your cpp file
 2. Include `Engine.h`
 3. Make a new Class and Inherit 'Class Engine'
