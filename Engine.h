@@ -1,6 +1,9 @@
 #ifndef ENGINE
   #define ENGINE
 
+  #include "Renderer.h"
+  #include "Objects.h"
+
   #define GL_GLEXT_PROTOTYPES
 
   #if defined(__linux__)
@@ -11,62 +14,59 @@
     #include <X11/X.h>
     #include <X11/Xlib.h>
     #include <X11/Xutil.h>
+
   #endif
 
   #if defined(_WIN32)
-    //WHOMEGALUL
+    // Windows API
   #endif
 
-  #include "Logger.h"
-  #include "Renderer.h"
+  #if defined NETWORKING
+    #include "Networking.h"
+  #endif
+
+  #if defined SOUND
+    #include "Libraries/Sound.h"
+  #endif
+
   #include <iostream>
   #include <string>
   #include <thread>
   #include <unistd.h>
   #include <time.h>
 
+
 //---------------------------------------------------------//
 
 class Engine
 {
 
-public:
-
-  //Engine(){};
-  // Engine(uint16_t width, uint16_t height);
-  // Engine(uint16_t width, uint16_t height, Logger* logs);
-  // ~Engine();
-
-
 protected:
-  void construct(uint16_t width, uint16_t height, std::string name, Logger* logs);
+  void construct(uint16_t width, uint16_t height, std::string name, unsigned int FPS);
   void start();
+
   virtual void userInitialse(){};
-  virtual void userUpdate(){};
+  virtual void userUpdate(float deltaTime){};
+  virtual void userInput(XEvent events){};
+  virtual void userDraw(){};
 
+  void setBackgroundColour(float colour[4]);
+  void setCamera(Camera* newCam);
 
-public:
-  objt* Quad(int x1, int y1, int width, int height, int col, bool full);
-
-  // void Draw(int x, int y, int col);
-  // void DrawLine(int x1, int y1, int x2, int y2, int col);
-  //void DrawRect(int x1, int y1, int x2, int y2, int col, bool full);
-  //void DrawTri(int x, int y, int w, int h, int col, bool full);
-  // void DrawCircle(int x, int y, int r, int col, bool full);
-
-  //void DrawSprite(int x, int y, Sprite s, xScale xs, yScale ys);
-  //void DrawString(int x, int y, std::string text, int col, xScale xs, yScale ys)
-
-  // void DrawLine(int x1, int y1, int z1, int x2, int y2, int z2, int col);
-  // void DrawCube(int x, int y, int w, int h, int d, int col, bool full);
-  // void DrawPyramid(int x, int y, int w, int h, int col, bool full);
-  // void DrawSphere(int x, int y, int r, int col);
-
+  Object* Line(int x1_, int y1_, int z1_, int width, int height, int depth, float *col);
+  Object* Plane(int x1, int y1, int z1, int width, int height, float* col, Texture* texture);
+  Object* Cube(int x1, int y1, int z1, int width, int height, int depth, float* col, Texture* texture);
+  // Object* Sphere();
 
   // int getKeys();
   int* getMousePos(XEvent* events);
   // int getMouseState();
 
+#if defined SOUND
+  void addSound(std::string file) {
+    soundEngine.addSound(file);
+  }
+#endif
 
 private:
   void Initialse();
@@ -84,11 +84,10 @@ private:
   void CalcFrameTime();
   void DisplayFPSThread();
 
-  Logger* Logs;
-
   std::string WindowName;
   int WindowWidth;
   int WindowHeight;
+  float bgColour[3] = { 0,0,0 };
 
   #if defined(__linux__)
     Display* XDisplay;
@@ -108,9 +107,9 @@ private:
   Colormap cmap;
   GLXContext glContext;
   GLint attributes[5] = { GLX_RGBA, GLX_DEPTH_SIZE, 24, GLX_DOUBLEBUFFER, None };
-
-  std::vector<objt*> ObjectList;
   //
+
+  std::vector<Object*> ObjectList;
 
   bool Initialised = false;
 
@@ -121,18 +120,30 @@ private:
 
   int MousePos[2] = {0,0};
 
+
+  #if defined SOUND
+    SoundEngine soundEngine;
+  #endif
+
 };
 
 //---------------------------------------------------------//
 
 
 
-void Engine::construct(uint16_t width, uint16_t height, std::string name = "", Logger* logs = nullptr)
+void Engine::construct(uint16_t width, uint16_t height, std::string name = "", unsigned int FPS = 60)
 {
   WindowWidth = width;
   WindowHeight = height;
   WindowName = name;
-  Logs = logs;
+
+  OrthCamera* defaultCam = new OrthCamera();
+  defaultCam->setProjection(0.0f,width,0.0f,height,-10.0f,10.0f);
+  defaultCam->setCamera(glm::vec3(0,0,0));
+  setCamera(defaultCam);
+
+  if (FPS == 0) { FPS = UINT_MAX; }
+  FPSLimit = 1.0/(float)FPS;
 }
 void Engine::start()
 {
@@ -142,12 +153,20 @@ void Engine::start()
   std::thread main = std::thread
     (&Engine::Initialse, this);
 
-
   std::thread fps = std::thread
     (&Engine::DisplayFPSThread, this);
 
+#if defined SOUND
+  std::thread sound = std::thread
+    (&SoundEngine::soundLoop, &soundEngine);
+#endif
+
   main.join();
   fps.join();
+
+#if defined SOUND
+  sound.join();
+#endif
 
 }
 void Engine::Initialse()
@@ -177,7 +196,8 @@ void Engine::InitWindow(uint16_t width, uint16_t height)
 
     swa.colormap = cmap;
     swa.event_mask = ExposureMask | StructureNotifyMask |
-                      KeyPressMask | ButtonPressMask | PointerMotionMask;
+                      KeyPressMask | KeyReleaseMask | ButtonPressMask | ButtonReleaseMask
+                      | PointerMotionMask;
 
     XWindow = XCreateWindow
       (XDisplay, XRootWindow, 0, 0, WindowWidth, WindowHeight, 0,
@@ -226,7 +246,7 @@ void Engine::CloseWindow()
 
 void Engine::MainThread()
 {
-
+srand( time( NULL ) );
 
   while(true)
   {
@@ -234,7 +254,6 @@ void Engine::MainThread()
 
     if (timeCounter >= FPSLimit) // Enters if enough time has passed (FPS Limt)
     {
-
       CoreUpdate();
 
       timeCounter = 0;
@@ -249,119 +268,307 @@ void Engine::MainThread()
 void Engine::CoreUpdate()
 {
 
-  glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-  glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+  // glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+
+  glClearColor( bgColour[0], bgColour[1], bgColour[2], 1.0f );
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   EventHandler();
-  userUpdate();
+  userUpdate(timeCounter);
 
   Draw();
-  //
+
   glXSwapBuffers(XDisplay, XWindow);
+
 }
 
 void Engine::Draw()
 {
-
-  for (objt* o : ObjectList)
-  {
-    o->draw();
-  }
-
+  userDraw();
 }
 
 
 void Engine::EventHandler()
 {
   XEvent events;
+
   while(XPending(XDisplay))
   {
     XNextEvent(XDisplay, &events);
 
     if (events.type == Expose) // On Window Init
-    {
-
-    }
+    { }
     if (events.type == ConfigureNotify) // On Window Property Change - i.e. resize
     {
       XGetWindowAttributes(XDisplay, XWindow, &gwa);
       glViewport(0, 0, gwa.width, gwa.height);
     }
-
-
-    if (events.type == KeyPress)
-    {
-      // Key Pressed
-    }
-    else if (events.type == KeyRelease)
-    {
-      // Key Released
-    }
-    else if(events.type == MotionNotify)
+    if(events.type == MotionNotify)
     {
       getMousePos(&events);
     }
+
+
+    userInput(events);
   }
+
 }
 
 int* Engine::getMousePos(XEvent* events)
 {
   MousePos[0] = events->xbutton.x;
-  MousePos[1] = events->xbutton.y;
+  MousePos[1] = gwa.height - events->xbutton.y;
 
   return MousePos;
 }
 
 
-
-objt* Engine::Quad(int x1_, int y1_, int width, int height, int col, bool full)
+void Engine::setBackgroundColour(float colour[3])
 {
-  int windowWidth = WindowWidth/2;
-  int windowHeight = WindowHeight/2;
+  bgColour[0] = colour[0];
+  bgColour[1] = colour[1];
+  bgColour[2] = colour[2];
+}
 
-  float x1 = ((float)(x1_)/windowWidth)-1;
-  float y1 = ((float)(y1_)/windowHeight)-1;
-  float x2 = ((float)(x1_+width)/windowWidth)-1;
-  float y2 = ((float)(y1_+height)/windowHeight)-1;
+void Engine::setCamera(Camera* newCam)
+{
+  renderer.setCamera(newCam);
+}
+
+
+Object* Engine::Line(int x1_, int y1_, int z1_, int width, int height, int depth, float *col)
+{
+  float r = col[0];
+  float g = col[1];
+  float b = col[2];
+  float a = col[3];
+
+  float x1, x2, y1, y2, z1, z2;
+  int largest = width > height ? width : height;
+  largest = largest > depth ? largest : depth;
+
+  x1 = -(float)width/largest; x2 = (float)width/largest;
+  y1 = -(float)height/largest; y2 = (float)height/largest;
+  z1 = -(float)depth/largest; z2 = (float)depth/largest;
+
+  // x1 = -(float)width/largest; x2 = (float)width/largest;
+  // y1 = -(float)height/largest; y2 = (float)height/largest;
 
   float vertices[] = {
-    x2, y1, 0.0f, // top right         3------0
-    x2, y2, 0.0f, // bottom right      |      |
-    x1, y2, 0.0f, // bottom left       |      |
-    x1, y1, 0.0f // top left           2------1
+//  Position      Colour        Texture Coords
+    x1, y1, z1,   r, g, b, a,   1.0f, 1.0f,
+    x2, y2, z2,   r, g, b, a,   0.0f, 0.0f
   };
   unsigned int indices[] = {
-    0, 1, 2, // first triangle
-    2, 3, 0 // second triangle
+      0, 1, 2, // first triangle
+      2, 3, 0, // second triangle
   };
 
-  objt* aaaaaa = new objt(vertices, indices, &shader, &renderer);
+
+  LineObj* aaaaaa = new LineObj(vertices, sizeof(vertices), indices, &shader, &renderer, x2, y2, z2 );
+                                // glm::vec3(x1, y1, z1), glm::vec3(x2, y2, z2));
+
+  aaaaaa->setTranslation(x1_,y1_,z1_);
+  aaaaaa->setScale(largest/2);
   ObjectList.push_back(aaaaaa);
 
   return ObjectList.back();
 }
 
-// void Engine::DrawTri(int x, int y, int w, int h, int col, bool full)
+
+Object* Engine::Plane(int x1_, int y1_, int z1_, int width, int height, float *col, Texture* texture = nullptr)
+{
+  float r = col[0];
+  float g = col[1];
+  float b = col[2];
+  float a = col[3];
+
+  float x1, x2, y1, y2;
+  int largest = width > height ? width : height;
+
+  x1 = -(float)width/largest; x2 = (float)width/largest;
+  y1 = -(float)height/largest; y2 = (float)height/largest;
+
+  float vertices[] = {
+//  Position      Colour        Texture Coords
+    x2, y1, 0.0f,   r, g, b, a,   1.0f, 1.0f,
+    x2, y2, 0.0f,   r, g, b, a,   1.0f, 0.0f,
+    x1, y2, 0.0f,   r, g, b, a,   0.0f, 0.0f,
+    x1, y1, 0.0f,   r, g, b, a,   0.0f, 1.0f
+  };
+  unsigned int indices[] = {
+      0, 1, 2, // first triangle
+      2, 3, 0, // second triangle
+  };
+
+  if(texture == nullptr) { texture = new Texture(""); }
+  PlaneObj* aaaaaa = new PlaneObj(vertices, sizeof(vertices), indices, &shader, &renderer, texture, x2, y2);
+  aaaaaa->setTranslation(x1_,y1_,z1_);
+  aaaaaa->setScale(largest/2);
+  ObjectList.push_back(aaaaaa);
+
+  return ObjectList.back();
+}
+
+
+Object* Engine::Cube(int x1_, int y1_, int z1_, int width, int height, int depth, float* col, Texture* texture = nullptr)
+{
+  float r = col[0];
+  float g = col[1];
+  float b = col[2];
+  float a = col[3];
+
+  float x1, x2, y1, y2, z1, z2;
+  int largest = width > height ? width : height;
+  largest = largest > depth ? largest : depth;
+
+  x1 = -(float)width/largest; x2 = (float)width/largest;
+  y1 = -(float)height/largest; y2 = (float)height/largest;
+  z1 = -(float)depth/largest; z2 = (float)depth/largest;
+
+  float vertices[] = {
+//  Position        Colour        Texture Coords
+
+// Front
+    x2, y1, z2,   r, g, b, a,   1.0f, 1.0f,
+    x2, y2, z2,   r, g, b, a,   1.0f, 0.0f,
+    x1, y2, z2,   r, g, b, a,   0.0f, 0.0f,
+    x1, y1, z2,   r, g, b, a,   0.0f, 1.0f,
+
+// Back
+    x1, y1, z1,   r, g, b, a,   1.0f, 1.0f,
+    x1, y2, z1,   r, g, b, a,   1.0f, 0.0f,
+    x2, y2, z1,   r, g, b, a,   0.0f, 0.0f,
+    x2, y1, z1,   r, g, b, a,   0.0f, 1.0f,
+
+// Right Side
+    x2, y1, z1,   r, g, b, a,   1.0f, 1.0f,
+    x2, y2, z1,   r, g, b, a,   1.0f, 0.0f,
+    x2, y2, z2,   r, g, b, a,   0.0f, 0.0f,
+    x2, y1, z2,   r, g, b, a,   0.0f, 1.0f,
+
+// Left Side
+    x1, y1, z2,   r, g, b, a,   1.0f, 1.0f,
+    x1, y2, z2,   r, g, b, a,   1.0f, 0.0f,
+    x1, y2, z1,   r, g, b, a,   0.0f, 0.0f,
+    x1, y1, z1,   r, g, b, a,   0.0f, 1.0f,
+
+// Bottom Side
+    x2, y1, z1,   r, g, b, a,   1.0f, 1.0f,
+    x1, y1, z1,   r, g, b, a,   0.0f, 1.0f,
+    x1, y1, z2,   r, g, b, a,   0.0f, 0.0f,
+    x2, y1, z2,   r, g, b, a,   1.0f, 0.0f,
+
+// Top Side
+    x2, y2, z2,   r, g, b, a,   1.0f, 1.0f,
+    x1, y2, z2,   r, g, b, a,   0.0f, 1.0f,
+    x1, y2, z1,   r, g, b, a,   0.0f, 0.0f,
+    x2, y2, z1,   r, g, b, a,   1.0f, 0.0f
+
+  };
+
+  unsigned int indices[] = {
+// front
+      0, 1, 2, // first triangle
+      2, 3, 0, // second triangle
+// back
+      4, 5, 6,
+      6, 7, 4,
+// right
+      8, 9, 10,
+      10, 11, 8,
+// left
+      12, 13, 14,
+      14, 15, 12,
+// bottom
+      16, 17, 18,
+      18, 19, 16,
+// top
+      20, 21, 22,
+      22, 23, 20
+  };
+
+  if(texture == nullptr) { texture = new Texture(""); }
+  CubeObj* aaaaaa = new CubeObj(vertices, sizeof(vertices), indices, &shader, &renderer, texture, x2, y2, z2);
+  aaaaaa->setTranslation(x1_,y1_,z1_);
+  aaaaaa->setScale(largest/2);
+  ObjectList.push_back(aaaaaa);
+
+  return ObjectList.back();
+}
+
+
+// Object* Engine::Sphere()
 // {
+//   float r = 0.0f;
+//   float g = 1.0f;
+//   float b = 1.0f;
+//   float a = 1.0f;
 //
-//   float verticies[] = {
-//     -0.5f, -0.5f, 0.0f,
-//     0.5f, -0.5f, 0.0f,
-//     0.0f, 0.5f, 0.0f
-//   };
-//   shader.bind();
+//   int lats = 40;
+//   int longs = 40;
+//   int i, j;
+//   std::vector<float> vertices;
+//   std::vector<unsigned int> indices;
+//   int indicator = 0;
+//   for(i = 0; i <= lats; i++) {
+//       double lat0 = glm::pi<double>() * (-0.5 + (double) (i - 1) / lats);
+//      double z0  = sin(lat0);
+//      double zr0 =  cos(lat0);
 //
-//   unsigned int VertexBuffer;
+//      double lat1 = glm::pi<double>() * (-0.5 + (double) i / lats);
+//      double z1 = sin(lat1);
+//      double zr1 = cos(lat1);
 //
-//   glGenBuffers(1, &VertexBuffer);
-//   glBindBuffer(GL_ARRAY_BUFFER, VertexBuffer);
-//   glBufferData(GL_ARRAY_BUFFER, sizeof(verticies), verticies, GL_STATIC_DRAW);
+//      for(j = 0; j <= longs; j++) {
+//          double lng = 2 * glm::pi<double>() * (double) (j - 1) / longs;
+//          double x = cos(lng);
+//          double y = sin(lng);
 //
-//   glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-//   glEnableVertexAttribArray(0);
+//          vertices.push_back(x * zr0 * 1000);
+//          vertices.push_back(y * zr0 * 1000);
+//          vertices.push_back(z0 * 1000);
+//          vertices.push_back(r);
+//          vertices.push_back(g);
+//          vertices.push_back(b);
+//          vertices.push_back(a);
+//          vertices.push_back(1.0f);
+//          vertices.push_back(0.0f);
 //
+//          indices.push_back(indicator);
+//          indicator++;
+//
+//          vertices.push_back(x * zr1 * 1000);
+//          vertices.push_back(y * zr1 * 1000);
+//          vertices.push_back(z1 * 1000);
+//          vertices.push_back(r);
+//          vertices.push_back(g);
+//          vertices.push_back(b);
+//          vertices.push_back(a);
+//          vertices.push_back(1.0f);
+//          vertices.push_back(0.0f);
+//          indices.push_back(indicator);
+//          indicator++;
+//      }
+//      indices.push_back(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+//    }
+//
+//    float* verts = &vertices[0];
+//    unsigned int* indices2 = &indices[0];
+//
+//    for (int i = 0; i < 100; i++)
+//    {
+//      std::cout << verts[i] << std::endl;
+//    }
+//
+//    SphereObj* aaaaaa = new SphereObj(verts, sizeof(verts), indices2, &shader, &renderer, new Texture(""), 1.0f);
+//    ObjectList.push_back(aaaaaa);
+//    aaaaaa->setScale(100000);
+//
+//    return ObjectList.back();
 // }
+
+
 
 
 void Engine::CalcFrameTime()
@@ -376,11 +583,12 @@ void Engine::DisplayFPSThread()
 {
   while(!Initialised) {}
   while(Initialised){
-    sleep(1);
     int FPS = (1 / (elapsedTime + FPSLimit)) + 1;
 
     std::string title = WindowName + " | FPS: " + std::to_string(FPS);
     XStoreName(XDisplay, XWindow, title.c_str());
+
+    sleep(1);
   }
 }
 
